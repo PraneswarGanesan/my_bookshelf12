@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Inventory Management System</title>
+    <link rel="stylesheet" href="./stylesheet.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Add How many books you have</h1>
+        <!-- Form to add a new book -->
+        <form id="addBookForm">
+            <input type="text" id="title" placeholder="Title" required>
+            <input type="text" id="author" placeholder="Author" required>
+            <input type="number" id="quantity" placeholder="Quantity" required>
+            <button type="submit">Add Book</button>
+        </form>
+
+        <!-- Table to display the book inventory -->
+        <table id="bookTable">
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Quantity</th>
+                <th>Action</th>
+            </tr>
+            <!-- Rows for displaying book data will be added dynamically -->
+        </table>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+</html>
