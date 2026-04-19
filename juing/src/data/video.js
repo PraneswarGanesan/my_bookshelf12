@@ -1,0 +1,2 @@
+export const VIDEO_URL =
+'https://vod-adaptive-ak.vimeocdn.com/exp=1776540881~acl=%2Fc511e23d-2807-4f36-b3f8-1012c6320623%2Fpsid%3D86ad464aa91c8a0399a69b109410d1f8d007ad3eea68e6ab538511e4d20ea543%2F%2A~hmac=dd30929719e33c44d4854e9ce45cb6b5ac51bc0111b09aa1a150ade25f5eff43/c511e23d-2807-4f36-b3f8-1012c6320623/psid=86ad464aa91c8a0399a69b109410d1f8d007ad3eea68e6ab538511e4d20ea543/v2/playlist/av/c511e23d/avf/c6fbbd71/media.m3u8?pathsig=8c953e4f~i9dDQ8YKFobHRX3i9kCLmTlTpyl5CHwDzozUrTwsB7g&qsr=1&r=dXMtZWFzdDE%3D&st=video';

@@ -1,0 +1,556 @@
+import { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from 'lenis';
+
+import img1 from '../my-images/1.png';
+import img2 from '../my-images/2.jpeg';
+import img3 from '../my-images/3.png';
+import img4 from '../my-images/4.png';
+import stockCar      from '../stock-images/dawid-zawila-v4QjWQKfX4o-unsplash.jpg';
+import stockBuilding from '../stock-images/elvira-butler-yRmzz43CVtY-unsplash.jpg';
+import stockChrysler from '../stock-images/jonathan-pease-mt1XnBeaQEE-unsplash.jpg';
+import resume from '../resume/PraneswarGanesanResume.pdf';
+
+import { projects }    from '../data/Projects';
+import { skills }      from '../data/skills';
+import { internships } from '../data/internships';
+
+gsap.registerPlugin(ScrollTrigger);
+
+const HERO_VIDEO =
+  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4';
+
+/* ── Art Deco fan ornament ──────────────────────────────── */
+function Fan({ width = 96, opacity = 1, light = false }) {
+  const color = light ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)';
+  const h = width / 2;
+  const cx = width / 2;
+  const cy = h;
+  const R  = h - 1;
+  return (
+    <svg viewBox={`0 0 ${width} ${h}`} width={width} height={h} fill="none" aria-hidden style={{ opacity }}>
+      {Array.from({ length: 9 }, (_, i) => {
+        const a = (Math.PI * i) / 8;
+        return (
+          <line key={i} x1={cx} y1={cy}
+            x2={cx + R * Math.cos(Math.PI - a)} y2={cy - R * Math.sin(a)}
+            stroke={color} strokeWidth="0.6" />
+        );
+      })}
+      {[0.88, 0.63, 0.37].map((f, i) => (
+        <path key={i}
+          d={`M${cx - R * f} ${cy} A${R * f} ${R * f} 0 0 1 ${cx + R * f} ${cy}`}
+          stroke={color} strokeWidth="0.6" fill="none" />
+      ))}
+      <line x1={0} y1={cy} x2={width} y2={cy} stroke={color} strokeWidth="0.6" opacity="0.35" />
+    </svg>
+  );
+}
+
+/* ── Corner bracket ─────────────────────────────────────── */
+function Corner({ pos, light = false }) {
+  const t  = pos.includes('top')   ? 'top-6'    : 'bottom-6';
+  const l  = pos.includes('left')  ? 'left-6'   : 'right-6';
+  const bT = pos.includes('top')   ? 'border-t' : 'border-b';
+  const bL = pos.includes('left')  ? 'border-l' : 'border-r';
+  const cl = light ? 'border-white/30' : 'border-black/20';
+  return <div className={`absolute ${t} ${l} w-12 h-12 ${bT} ${bL} ${cl}`} />;
+}
+
+/* ── Main ───────────────────────────────────────────────── */
+export default function Main() {
+  const deckRef = useRef(null);
+  const navRef  = useRef(null);
+
+  useEffect(() => {
+    /* Lenis smooth scroll */
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    });
+    const tick = time => lenis.raf(time * 1000);
+    gsap.ticker.add(tick);
+    gsap.ticker.lagSmoothing(0);
+    lenis.on('scroll', ScrollTrigger.update);
+
+    /* Nav transparency */
+    lenis.on('scroll', ({ scroll }) => {
+      const nav = navRef.current;
+      if (!nav) return;
+      const past = scroll > 70;
+      nav.style.background        = past ? 'rgba(255,255,255,0.96)' : 'transparent';
+      nav.style.borderBottomColor = past ? 'rgba(0,0,0,0.08)'       : 'transparent';
+      nav.style.backdropFilter    = past ? 'blur(14px)'              : 'none';
+      nav.querySelectorAll('.nl').forEach(el => {
+        el.style.color = past ? '#0a0a0a' : '#ffffff';
+      });
+    });
+
+    /* Entrance animations */
+    gsap.utils.toArray('.rise').forEach(el => {
+      gsap.fromTo(el,
+        { y: 52, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.05, ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 88%' } }
+      );
+    });
+
+    /* Parallax */
+    gsap.utils.toArray('.para').forEach(el => {
+      gsap.to(el, {
+        yPercent: -14, ease: 'none',
+        scrollTrigger: {
+          trigger: el.parentElement,
+          start: 'top bottom', end: 'bottom top', scrub: true,
+        },
+      });
+    });
+
+    /* Deck cards */
+    const cards = gsap.utils.toArray('.deck-card');
+    const n = cards.length;
+    if (n && deckRef.current) {
+      cards.forEach((card, i) => {
+        gsap.set(card, { zIndex: n - i, scale: 1 - i * 0.032, y: i * 16, transformOrigin: 'center center' });
+      });
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: deckRef.current,
+          start: 'top top',
+          end: `+=${n * 100}vh`,
+          pin: true, scrub: 0.8, anticipatePin: 1,
+        },
+      });
+      cards.forEach((card, i) => {
+        if (i >= n - 1) return;
+        tl.to(card, { yPercent: -112, opacity: 0, duration: 1 }, i * 1.08);
+        for (let j = i + 1; j < n; j++) {
+          const p = j - i - 1;
+          tl.to(cards[j], { scale: 1 - p * 0.032, y: p * 16, duration: 1 }, i * 1.08);
+        }
+      });
+    }
+
+    return () => {
+      gsap.ticker.remove(tick);
+      lenis.destroy();
+      ScrollTrigger.getAll().forEach(st => st.kill());
+    };
+  }, []);
+
+  return (
+    <>
+      {/* ══════════════ NAV ══════════════ */}
+      <nav
+        ref={navRef}
+        className="fixed top-0 left-0 right-0 z-50 px-8 lg:px-16 py-5
+                   flex items-center justify-between transition-all duration-500
+                   border-b border-transparent"
+      >
+        <span className="nl text-xl tracking-widest text-white transition-colors duration-400"
+              style={{ fontFamily: 'DxFiggle, serif' }}>
+          PG
+        </span>
+        <div className="hidden md:flex items-center gap-10 text-[10px] tracking-[0.28em] uppercase">
+          {['About', 'Work', 'Skills', 'Contact'].map(l => (
+            <a key={l} href={`#${l.toLowerCase()}`}
+               className="nl text-white hover:opacity-50 transition-opacity duration-300">
+              {l}
+            </a>
+          ))}
+        </div>
+        <a href={resume} download
+           className="nl text-[10px] tracking-[0.22em] uppercase border px-5 py-2.5
+                      text-white border-white/35 hover:bg-white hover:text-black
+                      transition-all duration-300">
+          Résumé
+        </a>
+      </nav>
+
+
+      {/* ══════════════ HERO ══════════════ */}
+      <section className="relative h-screen overflow-hidden bg-black">
+        <video autoPlay muted loop playsInline
+               className="absolute inset-0 w-full h-full object-cover"
+               src={HERO_VIDEO} />
+        <div className="absolute inset-0 bg-black/40" />
+
+        {['top-left','top-right','bottom-left','bottom-right'].map(p => (
+          <Corner key={p} pos={p} light />
+        ))}
+
+        {/* Thin white line rule */}
+        <div className="absolute top-1/2 left-8 right-8 h-px bg-white/08 pointer-events-none" />
+
+        <div className="relative z-10 h-full flex flex-col justify-end px-8 lg:px-16 pb-24">
+          <div className="max-w-7xl mx-auto w-full">
+            <p className="text-white/45 tracking-[0.5em] text-[10px] uppercase mb-5">
+              Full-Stack Engineer · Cloud Infrastructure · AI Systems
+            </p>
+            <h1 className="text-white leading-[0.84]"
+                style={{ fontFamily: 'DxFiggle, serif', fontSize: 'clamp(4rem, 14vw, 13rem)' }}>
+              PRANESWAR<br />
+              <span className="text-white/70">GANESAN</span>
+            </h1>
+            <div className="mt-8 flex items-center gap-5">
+              <span className="block w-12 h-px bg-white/40" />
+              <p className="text-white/40 text-[10px] tracking-[0.38em] uppercase">
+                Building what scales · India · 2026
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+          <span className="text-white/30 text-[8px] tracking-[0.5em] uppercase">Scroll</span>
+          <div className="w-px h-10 bg-white/20 scroll-line" />
+        </div>
+      </section>
+
+
+      {/* ══════════════ ABOUT ══════════════ */}
+      <section id="about" className="relative min-h-screen bg-white overflow-hidden flex items-center">
+        {/* Giant watermark */}
+        <div aria-hidden className="absolute inset-0 flex items-center overflow-hidden pointer-events-none select-none">
+          <span className="text-[22vw] leading-none"
+                style={{ fontFamily: 'DxFiggle, serif', color: 'rgba(0,0,0,0.03)' }}>
+            ABOUT
+          </span>
+        </div>
+
+        {/* Chrysler building faint accent */}
+        <div className="absolute top-0 right-0 w-52 h-80 overflow-hidden pointer-events-none">
+          <img src={stockChrysler} alt="" className="w-full h-full object-cover object-top para opacity-[0.07]" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-8 lg:px-16 py-28
+                        grid lg:grid-cols-[1fr_1.15fr] gap-12 lg:gap-24 items-center w-full">
+          {/* Text */}
+          <div>
+            <p className="rise text-[10px] tracking-[0.4em] uppercase mb-5 text-black/40">
+              01 / About
+            </p>
+            <h2 className="rise text-black leading-[0.88] mb-8"
+                style={{ fontFamily: 'DxFiggle, serif', fontSize: 'clamp(2.6rem, 6vw, 5.2rem)' }}>
+              ENGINEERING<br />WITH INTENT
+            </h2>
+            <div className="rise w-10 h-px bg-black mb-8" />
+            <p className="rise text-stone-500 leading-[1.9] text-[14px] max-w-md mb-5">
+              I'm Praneswar Ganesan — a full-stack engineer who builds systems that survive contact with
+              production. I architect cloud-native platforms, AI deployment pipelines, and enterprise tools
+              that scale from zero to thousands of requests.
+            </p>
+            <p className="rise text-stone-500 leading-[1.9] text-[14px] max-w-md">
+              Interned at Accenture's Cloud Manager &amp; Optimizer division, designing APIs and
+              observability dashboards used by real teams. Currently completing my Computer Science
+              degree while actively contributing to open source.
+            </p>
+            <div className="rise mt-10 flex items-center gap-5">
+              <Fan />
+              <div>
+                <p className="text-[9px] tracking-[0.28em] uppercase text-stone-400 mb-0.5">Based in</p>
+                <p className="text-sm tracking-[0.18em] font-medium text-black">India · 2026</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Images */}
+          <div className="relative h-[580px] lg:h-[660px]">
+            <div className="rise absolute right-0 top-0 w-[58%] h-[88%] overflow-hidden">
+              <img src={img1} alt="Praneswar Ganesan"
+                   className="w-full h-full object-cover object-top para" />
+              <div className="absolute inset-0 border border-black/12 pointer-events-none" />
+            </div>
+            <div className="rise absolute left-0 bottom-0 w-[46%] h-[56%] overflow-hidden">
+              <img src={img2} alt=""
+                   className="w-full h-full object-cover object-top para" />
+              <div className="absolute inset-0 border border-black/10 pointer-events-none" />
+            </div>
+            <div className="absolute left-[45%] top-6 w-px h-28 bg-black/15" />
+          </div>
+        </div>
+      </section>
+
+
+      {/* ══════════════ EXPERIENCE ══════════════ */}
+      <section id="experience" className="relative min-h-screen overflow-hidden flex items-center">
+        <div className="absolute inset-0">
+          <img src={stockBuilding} alt="" className="w-full h-full object-cover para" />
+          <div className="absolute inset-0 bg-black/80" />
+        </div>
+
+        <Corner pos="top-left" light />
+        <Corner pos="bottom-right" light />
+
+        <div className="relative z-10 max-w-7xl mx-auto px-8 lg:px-16 py-28 w-full">
+          <p className="rise text-[10px] tracking-[0.4em] uppercase mb-6 text-white/40">
+            02 / Experience
+          </p>
+          <h2 className="rise text-white leading-[0.88] mb-16"
+              style={{ fontFamily: 'DxFiggle, serif', fontSize: 'clamp(2.8rem, 8vw, 7rem)' }}>
+            IN THE<br />ARENA
+          </h2>
+
+          {internships.map((item, i) => (
+            <div key={i} className="rise border-t border-white/12 py-10 grid lg:grid-cols-[230px_1fr] gap-8">
+              <div>
+                <p className="text-[10px] tracking-[0.22em] uppercase mb-2 text-white/40">{item.year}</p>
+                <p className="text-white text-3xl leading-tight" style={{ fontFamily: 'DxFiggle, serif' }}>
+                  {item.company}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] tracking-[0.22em] uppercase mb-3 text-white/50">{item.role}</p>
+                <p className="text-[13px] leading-[1.85] text-white/45">{item.description}</p>
+              </div>
+            </div>
+          ))}
+
+          <div className="rise border-t border-white/12 py-10 grid lg:grid-cols-[230px_1fr] gap-8">
+            <div>
+              <p className="text-[10px] tracking-[0.22em] uppercase mb-2 text-white/40">2022 – 2026</p>
+              <p className="text-white text-3xl leading-tight" style={{ fontFamily: 'DxFiggle, serif' }}>
+                University
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] tracking-[0.22em] uppercase mb-3 text-white/50">
+                B.E. Computer Science &amp; Engineering
+              </p>
+              <p className="text-[13px] leading-[1.85] text-white/45">
+                Pursuing distributed systems, cloud-native architecture, and AI/ML.
+                Active open-source contributor. Built multiple production-grade systems independently.
+              </p>
+            </div>
+          </div>
+
+          <div className="rise mt-4">
+            <Fan light />
+          </div>
+        </div>
+      </section>
+
+
+      {/* ══════════════ PROJECTS — DECK ══════════════ */}
+      <section id="work">
+        <div ref={deckRef} className="relative h-screen" style={{ overflow: 'hidden' }}>
+          {projects.map((project, i) => {
+            const dark = i % 2 !== 0;
+            return (
+              <div key={project.title}
+                   className="deck-card absolute inset-0 w-full h-full flex flex-col lg:flex-row"
+                   style={{ background: dark ? '#0a0a0a' : '#ffffff' }}>
+
+                {/* Content */}
+                <div className="relative flex-1 flex flex-col justify-between p-10 lg:p-14 overflow-hidden"
+                     style={{ color: dark ? '#ffffff' : '#0a0a0a' }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] tracking-[0.4em] uppercase"
+                          style={{ color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)' }}>
+                      {String(i + 1).padStart(2, '0')} / {projects.length}
+                    </span>
+                    <span className="text-[9px] tracking-[0.28em] uppercase"
+                          style={{ color: dark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' }}>
+                      Project
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="leading-[0.84] mb-5"
+                        style={{ fontFamily: 'DxFiggle, serif', fontSize: 'clamp(2.4rem, 5.5vw, 5.2rem)' }}>
+                      {project.title}
+                    </h3>
+                    <p className="text-[13px] leading-[1.85] mb-5 max-w-md"
+                       style={{ color: dark ? 'rgba(255,255,255,0.5)' : '#6b7280' }}>
+                      {project.description}
+                    </p>
+                    <p className="text-[9px] tracking-[0.22em] uppercase mb-8"
+                       style={{ color: dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)' }}>
+                      {project.stack}
+                    </p>
+                    <a href={project.link} target="_blank" rel="noopener noreferrer"
+                       className="inline-flex items-center gap-3 border px-6 py-3
+                                  text-[10px] tracking-[0.28em] uppercase transition-all duration-300"
+                       style={{ borderColor: dark ? 'rgba(255,255,255,0.28)' : '#0a0a0a',
+                                color: dark ? '#ffffff' : '#0a0a0a' }}
+                       onMouseEnter={e => {
+                         e.currentTarget.style.background = dark ? '#ffffff' : '#0a0a0a';
+                         e.currentTarget.style.color      = dark ? '#0a0a0a' : '#ffffff';
+                       }}
+                       onMouseLeave={e => {
+                         e.currentTarget.style.background = 'transparent';
+                         e.currentTarget.style.color      = dark ? '#ffffff' : '#0a0a0a';
+                       }}>
+                      View Project <span>→</span>
+                    </a>
+                  </div>
+
+                  {/* Corner bracket */}
+                  <div className="absolute bottom-0 left-0 w-20 h-20 border-l-2 border-b-2"
+                       style={{ borderColor: dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+                </div>
+
+                {/* Visual side */}
+                <div className="relative lg:w-[42%] overflow-hidden flex items-end p-10"
+                     style={{ background: dark ? '#111111' : '#f5f5f3' }}>
+                  {/* Giant number */}
+                  <div aria-hidden className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                    <span style={{ fontFamily: 'DxFiggle, serif', fontSize: '26vw', lineHeight: 1,
+                                   color: dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)' }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+
+                  <div className="absolute top-7 right-7 w-12 h-12 border-r border-t"
+                       style={{ borderColor: dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)' }} />
+
+                  <div className="relative z-10 space-y-3">
+                    {project.highlights.map((h, j) => (
+                      <div key={j} className="flex items-start gap-3">
+                        <span className="text-[7px] mt-1.5 shrink-0"
+                              style={{ color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)' }}>◆</span>
+                        <p className="text-[12px] leading-[1.75]"
+                           style={{ color: dark ? 'rgba(255,255,255,0.42)' : '#6b7280' }}>
+                          {h}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="absolute bottom-6 right-6">
+                    <Fan width={80} opacity={0.25} light={dark} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+
+      {/* ══════════════ SKILLS ══════════════ */}
+      <section id="skills" className="relative min-h-screen bg-white overflow-hidden flex items-center">
+        {/* VW Beetle ghost */}
+        <div className="absolute bottom-0 right-0 w-[58%] h-[72%] overflow-hidden pointer-events-none">
+          <img src={stockCar} alt=""
+               className="w-full h-full object-cover object-left-top opacity-[0.055]" />
+        </div>
+        {/* Watermark */}
+        <div aria-hidden className="absolute bottom-0 left-0 pointer-events-none select-none overflow-hidden leading-none">
+          <span style={{ fontFamily: 'DxFiggle, serif', fontSize: '20vw', color: 'rgba(0,0,0,0.025)' }}>
+            SKILLS
+          </span>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-8 lg:px-16 py-28 w-full">
+          <p className="rise text-[10px] tracking-[0.4em] uppercase mb-5 text-black/40">
+            03 / Arsenal
+          </p>
+          <h2 className="rise text-black leading-[0.88] mb-14"
+              style={{ fontFamily: 'DxFiggle, serif', fontSize: 'clamp(2.8rem, 7vw, 6rem)' }}>
+            THE<br />ARSENAL
+          </h2>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3">
+            {skills.map((skill, i) => (
+              <div key={i}
+                   className="rise group border border-stone-200 p-6 cursor-default transition-all duration-300"
+                   style={{ transitionDelay: `${i * 25}ms` }}
+                   onMouseEnter={e => {
+                     e.currentTarget.style.background  = '#0a0a0a';
+                     e.currentTarget.style.borderColor = '#0a0a0a';
+                   }}
+                   onMouseLeave={e => {
+                     e.currentTarget.style.background  = '';
+                     e.currentTarget.style.borderColor = '';
+                   }}>
+                <div className="flex items-start gap-3">
+                  <span className="text-[8px] mt-1.5 shrink-0 text-black/35 group-hover:text-white/40
+                                   transition-colors duration-300">◆</span>
+                  <p className="text-[13px] leading-[1.75] text-stone-600
+                                group-hover:text-white/75 transition-colors duration-300">
+                    {skill}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+      {/* ══════════════ CONTACT ══════════════ */}
+      <section id="contact" className="relative min-h-screen overflow-hidden flex items-center"
+               style={{ background: '#0a0a0a' }}>
+
+        {/* Leather jacket — right bg */}
+        <div className="absolute inset-y-0 right-0 w-[52%] overflow-hidden">
+          <img src={img4} alt=""
+               className="w-full h-full object-cover object-center para"
+               style={{ opacity: 0.5, mixBlendMode: 'luminosity' }} />
+          <div className="absolute inset-0"
+               style={{ background: 'linear-gradient(to right, #0a0a0a 0%, transparent 55%)' }} />
+        </div>
+
+        {/* Motorcycle — bottom accent */}
+        <div className="absolute bottom-0 left-[36%] w-36 h-56 overflow-hidden opacity-[0.18]">
+          <img src={img3} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 border border-white/15" />
+        </div>
+
+        {['top-left','top-right','bottom-left','bottom-right'].map(p => (
+          <Corner key={p} pos={p} light />
+        ))}
+
+        <div className="relative z-10 max-w-7xl mx-auto px-8 lg:px-16 py-28">
+          <p className="rise text-[10px] tracking-[0.4em] uppercase mb-6 text-white/40">
+            04 / Contact
+          </p>
+          <h2 className="rise text-white leading-[0.86] mb-10"
+              style={{ fontFamily: 'DxFiggle, serif', fontSize: 'clamp(3rem, 10vw, 9rem)' }}>
+            LET'S<br />BUILD<br />
+            <span className="text-white/60">TOGETHER</span>
+          </h2>
+
+          <div className="rise w-10 h-px bg-white/30 mb-10" />
+
+          <div className="rise space-y-5">
+            {[
+              { label: 'praneswarganesan@gmail.com',    href: 'mailto:praneswarganesan@gmail.com' },
+              { label: 'github.com/praneswar-g',         href: 'https://github.com/praneswar-g' },
+              { label: 'LinkedIn / Praneswar Ganesan',   href: 'https://linkedin.com/in/praneswar-ganesan' },
+            ].map(({ label, href }) => (
+              <a key={href} href={href}
+                 target={href.startsWith('http') ? '_blank' : undefined}
+                 rel="noopener noreferrer"
+                 className="group flex items-center gap-4 text-white hover:text-white/50
+                            transition-colors duration-300">
+                <span className="text-[8px] text-white/35">◆</span>
+                <span className="text-base lg:text-lg tracking-wider">{label}</span>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-sm">→</span>
+              </a>
+            ))}
+          </div>
+
+          <div className="rise mt-14">
+            <Fan light />
+          </div>
+        </div>
+      </section>
+
+
+      {/* ══════════════ FOOTER ══════════════ */}
+      <footer className="border-t border-white/08 py-7 px-8 lg:px-16 flex items-center justify-between"
+              style={{ background: '#0a0a0a' }}>
+        <span className="text-white/50 text-sm tracking-widest" style={{ fontFamily: 'DxFiggle, serif' }}>
+          PG
+        </span>
+        <span className="text-[10px] tracking-[0.28em] uppercase text-white/20">
+          © 2026 Praneswar Ganesan
+        </span>
+        <Fan width={72} opacity={0.3} light />
+      </footer>
+    </>
+  );
+}
